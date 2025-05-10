@@ -16,34 +16,38 @@ app.use(cors());
 // API FOR ACTIONS WITH USERS
 
 // Post method for create user
-// Need in body: login:str, surname:str, name:str, patronymic:str, unit:int, role:"admin"||"user", password:str
+// Need in body: login:str, surname:str, name:str, patronymic:str, unit:int, role:"admin"||"user", password:str, passwordRepeat:str
 // Needs Bearer Authorization
 // Works only for admins
 app.post("/createUser", authMiddleware, (req, res) => {
   let userRole = req.user.role;
   if (userRole === "admin") {
-    const hashedPassword = encodePassword(req.body.password);
+    if (req.body.password === req.body.passwordRepeat) {
+      const hashedPassword = encodePassword(req.body.password);
 
-    db.run(
-      "INSERT INTO Users(login, surname, name, patronymic, unit, role, password) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [
-        req.body.login,
-        req.body.surname,
-        req.body.name,
-        req.body.patronymic,
-        req.body.unit,
-        req.body.role,
-        hashedPassword,
-      ],
-      (err) => {
-        if (err) {
-          res.status(409).send(err);
-          return console.log(err.message);
+      db.run(
+        "INSERT INTO Users(login, surname, name, patronymic, unit, role, password) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [
+          req.body.login,
+          req.body.surname,
+          req.body.name,
+          req.body.patronymic,
+          req.body.unit,
+          req.body.role,
+          hashedPassword,
+        ],
+        (err) => {
+          if (err) {
+            res.status(409).send(err);
+            return console.log(err.message);
+          }
+
+          res.status(201).send("Created");
         }
-
-        res.status(201).send("Created");
-      }
-    );
+      );
+    } else {
+      res.status(400).send("Passwords aren't same");
+    }
   } else {
     res.status(403).send("Forbidden");
   }
@@ -134,6 +138,43 @@ app.delete("/deleteUser", authMiddleware, (req, res) => {
       };
       res.status(200).send(result);
     });
+  } else {
+    res.status(403).send("Forbidden");
+  }
+});
+
+// Put method to update user data
+// Need in body: login:str, surname:str, name:str, patronymic:str, unit:int, password:str, passwordRepeat:str, id:int
+// Needs Bearer Authorization
+// Works only for admins
+app.put("/updateUser", authMiddleware, (req, res) => {
+  if (req.user.role === "admin") {
+    if (req.body.password === req.body.passwordRepeat) {
+      const hashedPassword = encodePassword(req.body.password);
+      db.run(
+        "UPDATE users SET login = ?, surname = ?, name = ?, patronymic = ?, unit = ?, password = ? WHERE id = ?",
+        [
+          req.body.login,
+          req.body.surname,
+          req.body.name,
+          req.body.patronymic,
+          req.body.unit,
+          hashedPassword,
+          req.body.id,
+        ],
+        (err, row) => {
+          if (err) {
+            res.status(500).send(err);
+            return console.log(err.message);
+          }
+          res.status(200).send("Updated");
+        }
+      );
+    } else {
+      res.status(403).send("Wrong password");
+    }
+  } else {
+    res.status(403).send("Forbidden");
   }
 });
 

@@ -2,11 +2,13 @@ Account Exit on client
 
 
 ADMIN:
-create user - /createUser === needs Bearer === needs body: login:str, surname:str, name:str patronymic:str, unit:int, role:"admin"||"user", password:str === #POST
+create user - /createUser === needs Bearer === needs body: login:str, surname:str, name:str patronymic:str, unit:int, role:"admin"||"user", password:str, passwordRepeat:str === #POST
 
 get all users = /getUsers === needs Bearer === #GET
 
 delete user = /deleteUser === needs Bearer === needs body: userId:int === #DELETE
+
+update user = /updateUser === needs Bearer === needs body: login:str, surname:str, name:str, patronymic:str, unit:int, password:str, passwordRepeat:str, id:int === #PUT
 
 USER:
 get info about current user - /getMe === needs Bearer === #GET
