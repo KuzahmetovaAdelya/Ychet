@@ -178,6 +178,47 @@ app.put("/updateUser", authMiddleware, (req, res) => {
   }
 });
 
+// CABINETS
+
+// Get method for getting cabinets by unit
+// Need Bearer Authorization
+// Works for users from needed unit
+app.get("/getCabByUnit", authMiddleware, (req, res) => {
+  db.all(
+    "SELECT id, unit, cabinet FROM cabinets WHERE unit=?",
+    [req.user.unit],
+    (err, row) => {
+      if (err) {
+        res.status(409).send(err);
+        return console.log(err.message);
+      } else {
+        res.status(200).send(row);
+      }
+    }
+  );
+});
+
+// Post method for creating new cabinet
+// Need in body: cabinet:str
+// Need Bearer Authorization
+app.post("/createCabinet", authMiddleware, (req, res) => {
+  const unit = req.user.unit;
+  db.run(
+    "INSERT INTO cabinets(unit, cabinet) VALUES (?, ?)",
+    [unit, req.body.cabinet],
+    (err) => {
+      if (err) {
+        res.status(500).send(err);
+        return console.log(err.message);
+      }
+
+      res.status(201).send("Created");
+    }
+  );
+});
+
+
+
 app.listen(port, () => {
   console.log(`App listening on port http://localhost:${port}/`);
 });

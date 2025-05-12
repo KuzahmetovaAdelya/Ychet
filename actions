@@ -1,3 +1,6 @@
+http://localhost:3001
+
+
 Account Exit on client
 
 
@@ -14,3 +17,7 @@ USER:
 get info about current user - /getMe === needs Bearer === #GET
 
 authorization - /auth === needs body: login:str, password:str === #POST
+
+get cabinet by unit - /getCabByUnit === needs Bearer === #GET
+
+create new cabinet - /createCabinet === needs Bearer === needs body: cabinet:str === #POST

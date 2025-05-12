@@ -26,6 +26,7 @@
   --color-blue: #3D69B1;
   --color-light-gray: #F5F6FA;
   --color-text-gray: #898989;
+
 }
 
 @media (prefers-color-scheme: dark) {
