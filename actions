@@ -3,21 +3,28 @@ http://localhost:3001
 
 Account Exit on client
 
-
 ADMIN:
 create user - /createUser === needs Bearer === needs body: login:str, surname:str, name:str patronymic:str, unit:int, role:"admin"||"user", password:str, passwordRepeat:str === #POST
 
-get all users = /getUsers === needs Bearer === #GET
+get all users - /getUsers === needs Bearer === #GET
 
-delete user = /deleteUser === needs Bearer === needs body: userId:int === #DELETE
+delete user - /deleteUser === needs Bearer === needs body: userId:int === #DELETE
 
-update user = /updateUser === needs Bearer === needs body: login:str, surname:str, name:str, patronymic:str, unit:int, password:str, passwordRepeat:str, id:int === #PUT
+update user - /updateUser === needs Bearer === needs body: login:str, surname:str, name:str, patronymic:str, unit:int, password:str, passwordRepeat:str, id:int === #PUT
+
+get all cabinets - /getCabs === needs Bearer === #GET
+
+get all resources - /getRes === needs Bearer === #GET
 
 USER:
 get info about current user - /getMe === needs Bearer === #GET
 
 authorization - /auth === needs body: login:str, password:str === #POST
 
-get cabinet by unit - /getCabByUnit === needs Bearer === #GET
+get cabinet by unit - /getCabsByUnit === needs Bearer === #GET
 
 create new cabinet - /createCabinet === needs Bearer === needs body: cabinet:str === #POST
+
+get resource - /getResByUnit === needs Bearer === #GET
+
+create resource - /createRes === needs Bearer === needs body: title:str, inventoryNumber:int, worker:str, checkCode:float||int, count:int, price:float||int === #POST

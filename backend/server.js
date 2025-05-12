@@ -17,8 +17,8 @@ app.use(cors());
 
 // Post method for create user
 // Need in body: login:str, surname:str, name:str, patronymic:str, unit:int, role:"admin"||"user", password:str, passwordRepeat:str
-// Needs Bearer Authorization
-// Works only for admins
+// Need Bearer Authorization
+// Work only for admins
 app.post("/createUser", authMiddleware, (req, res) => {
   let userRole = req.user.role;
   if (userRole === "admin") {
@@ -54,8 +54,8 @@ app.post("/createUser", authMiddleware, (req, res) => {
 });
 
 // Post method for authorization
-// Needs in body: login:str, password:str
-// Returns token
+// Need in body: login:str, password:str
+// Return token
 app.post("/auth", (req, res) => {
   db.all("SELECT id FROM Users WHERE login=?", [req.body.login], (err, row) => {
     if (err) {
@@ -89,8 +89,8 @@ app.post("/auth", (req, res) => {
 });
 
 // Get method for getting all users information
-// Needs Bearer Authorization
-// Works only for admins
+// Need Bearer Authorization
+// Work only for admins
 app.get("/getUsers", authMiddleware, (req, res) => {
   if (req.user.role === "admin") {
     db.all("SELECT * from users", (err, row) => {
@@ -111,7 +111,7 @@ app.get("/getUsers", authMiddleware, (req, res) => {
 });
 
 // Get method for get information about current user
-// Needs Bearer Authorization
+// Need Bearer Authorization
 app.get("/getMe", authMiddleware, (req, res) => {
   const userData = {
     surname: req.user.surname,
@@ -123,9 +123,9 @@ app.get("/getMe", authMiddleware, (req, res) => {
 });
 
 // Delete method for deleting user
-// Needs in body: userId:int
-// Needs Bearer Authorization
-// Works only for admin
+// Need in body: userId:int
+// Need Bearer Authorization
+// Work only for admin
 app.delete("/deleteUser", authMiddleware, (req, res) => {
   if (req.user.role === "admin") {
     db.run("DELETE FROM users WHERE id = ?", [req.body.userId], (err, row) => {
@@ -145,8 +145,8 @@ app.delete("/deleteUser", authMiddleware, (req, res) => {
 
 // Put method to update user data
 // Need in body: login:str, surname:str, name:str, patronymic:str, unit:int, password:str, passwordRepeat:str, id:int
-// Needs Bearer Authorization
-// Works only for admins
+// Need Bearer Authorization
+// Work only for admins
 app.put("/updateUser", authMiddleware, (req, res) => {
   if (req.user.role === "admin") {
     if (req.body.password === req.body.passwordRepeat) {
@@ -182,14 +182,14 @@ app.put("/updateUser", authMiddleware, (req, res) => {
 
 // Get method for getting cabinets by unit
 // Need Bearer Authorization
-// Works for users from needed unit
-app.get("/getCabByUnit", authMiddleware, (req, res) => {
+// Work for users from needed unit
+app.get("/getCabsByUnit", authMiddleware, (req, res) => {
   db.all(
     "SELECT id, unit, cabinet FROM cabinets WHERE unit=?",
     [req.user.unit],
     (err, row) => {
       if (err) {
-        res.status(409).send(err);
+        res.status(500).send(err);
         return console.log(err.message);
       } else {
         res.status(200).send(row);
@@ -217,7 +217,98 @@ app.post("/createCabinet", authMiddleware, (req, res) => {
   );
 });
 
+// Get method for getting all cabinets
+// Need Bearer Authorization
+// Work only for admin
+app.get("/getCabs", authMiddleware, (req, res) => {
+  if (req.user.role === "admin") {
+    db.all("SELECT * FROM cabinets", (err, row) => {
+      if (err) {
+        res.status(500).send(err);
+        return console.log(err.message);
+      } else {
+        res.status(200).send(row);
+      }
+    });
+  } else {
+    res.status(403).send("Forbidden");
+  }
+});
 
+// RESOURCES
+
+// Get method for getting resources by unit
+// Need Bearer Authorization
+app.get("/getResByUnit", authMiddleware, (req, res) => {
+  db.all(
+    "SELECT * FROM resources WHERE unit=?",
+    [req.user.unit],
+    (err, row) => {
+      if (err) {
+        res.status(500).send(err);
+        return console.log(err.message);
+      } else {
+        res.status(200).send(row);
+      }
+    }
+  );
+});
+
+// Post method for creating resource
+// Need in body: title:str, inventoryNumber:int, worker:str, checkCode:float||int, count:int, price:float||int
+// Need Bearer Authorization
+app.post("/createRes", authMiddleware, (req, res) => {
+  const today = new Date();
+  const day = String(today.getDate()).padStart(2, "0");
+  const month = String(today.getMonth() + 1).padStart(2, "0"); // January is 0
+  const year = today.getFullYear();
+  const dateOfRecord = `${day}.${month}.${year}`;
+
+  const price = req.body.price * req.body.count;
+  db.run(
+    "INSERT INTO resources(title, inventoryNumber, dateOfRecord, worker, checkCode, count, price, unit) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    [
+      req.body.title,
+      req.body.inventoryNumber,
+      dateOfRecord,
+      req.body.worker,
+      req.body.checkCode,
+      req.body.count,
+      price,
+      req.user.unit,
+    ],
+    (err) => {
+      if (err) {
+        res.status(409).send(err);
+        return console.log(err.message);
+      }
+
+      res.status(201).send("Created");
+    }
+  );
+});
+
+// Get method for getting all resources
+// Need Bearer Authorization
+// Work only for admin
+app.get("/getRes", authMiddleware, (req, res) => {
+  if (req.user.role === "admin") {
+    db.all("SELECT * FROM resources", (err, row) => {
+      if (err) {
+        res.status(500).send(err);
+        return console.log(err.message);
+      } else {
+        res.status(200).send(row);
+      }
+    });
+  } else {
+    res.status(403).send("Forbidden");
+  }
+});
+
+// app.get("/test", (req, res) => {
+//   res.status(200).send(result);
+// });
 
 app.listen(port, () => {
   console.log(`App listening on port http://localhost:${port}/`);
