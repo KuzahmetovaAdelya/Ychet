@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import { encodePassword, verifyPassword } from "./password.js";
 import bcrypt from "bcrypt";
 import "dotenv/config";
+import GetDate from "./date.js";
 
 const app = express();
 const port = 3001;
@@ -258,11 +259,7 @@ app.get("/getResByUnit", authMiddleware, (req, res) => {
 // Need in body: title:str, inventoryNumber:int, worker:str, checkCode:float||int, count:int, price:float||int
 // Need Bearer Authorization
 app.post("/createRes", authMiddleware, (req, res) => {
-  const today = new Date();
-  const day = String(today.getDate()).padStart(2, "0");
-  const month = String(today.getMonth() + 1).padStart(2, "0"); // January is 0
-  const year = today.getFullYear();
-  const dateOfRecord = `${day}.${month}.${year}`;
+  const dateOfRecord = GetDate();
 
   const price = req.body.price * req.body.count;
   db.run(
@@ -304,6 +301,81 @@ app.get("/getRes", authMiddleware, (req, res) => {
   } else {
     res.status(403).send("Forbidden");
   }
+});
+
+// Delete method for deleting resource and create new write in write-off journal
+// Need in body: inventoryNumber:int, count:int
+// Need Bearer Authorization
+app.delete("/deleteRes", authMiddleware, (req, res) => {
+  const unit = req.user.unit;
+  const inventoryNumber = req.body.inventoryNumber;
+
+  db.all(
+    "SELECT * FROM resources WHERE inventoryNumber=? AND unit=?",
+    [inventoryNumber, unit],
+    (err, row) => {
+      if (err) {
+        res.status(500).send(err);
+        return console.log(err.message);
+      } else {
+        const resource = row[0];
+        if (resource.count >= req.body.count) {
+          const worker = resource.worker;
+          const count = req.body.count;
+          const date = GetDate();
+
+          db.run(
+            "INSERT INTO writeoffres(date, inventoryNumber, worker, count, unit) VALUES (?, ?, ?, ?, ?)",
+            [date, inventoryNumber, worker, count, unit],
+            (err) => {
+              if (err) {
+                res.status(409).send(err);
+                return console.log(err.message);
+              }
+
+              if (resource.count === count) {
+                db.run(
+                  "DELETE FROM resources WHERE inventoryNumber = ?",
+                  [inventoryNumber],
+                  (err, row) => {
+                    if (err) {
+                      res.status(500).send(err);
+                      return console.log(err.message);
+                    }
+                    let result = {
+                      error: "none",
+                    };
+                    res.status(200).send(result);
+                  }
+                );
+              } else {
+                let newCount = resource.count - count;
+                const priceByOne = resource.price / resource.count;
+                let newPrice = newCount * priceByOne;
+                console.log(resource.count, newCount, priceByOne, newPrice)
+                db.run(
+                  "UPDATE resources SET count = ?, price = ? WHERE inventoryNumber = ?",
+                  [newCount, newPrice, inventoryNumber],
+                  (err, row) => {
+                    if (err) {
+                      res.status(500).send(err);
+                      return console.log(err.message);
+                    }
+                    res.status(200).send("Updated");
+                  }
+                );
+              }
+              // res.status(201).send("Created");
+            }
+          );
+        } else {
+          res.status(400).send("Not enough resources");
+        }
+
+        // res.status(200).send(row);
+      }
+    }
+  );
 });
 
 // app.get("/test", (req, res) => {

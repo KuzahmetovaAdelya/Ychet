@@ -28,3 +28,5 @@ create new cabinet - /createCabinet === needs Bearer === needs body: cabinet:str
 get resource - /getResByUnit === needs Bearer === #GET
 
 create resource - /createRes === needs Bearer === needs body: title:str, inventoryNumber:int, worker:str, checkCode:float||int, count:int, price:float||int === #POST
+
+delete resource - /deleteRes === needs Bearer === needs body: inventoryNumber:int, count:int === #DELETE
