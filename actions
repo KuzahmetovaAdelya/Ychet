@@ -16,17 +16,27 @@ get all cabinets - /getCabs === needs Bearer === #GET
 
 get all resources - /getRes === needs Bearer === #GET
 
+get all stocks - /getStocks === needs Bearer === #GET
+
 USER:
 get info about current user - /getMe === needs Bearer === #GET
 
 authorization - /auth === needs body: login:str, password:str === #POST
 
-get cabinet by unit - /getCabsByUnit === needs Bearer === #GET
+get cabinets by unit - /getCabsByUnit === needs Bearer === #GET
 
 create new cabinet - /createCabinet === needs Bearer === needs body: cabinet:str === #POST
 
-get resource - /getResByUnit === needs Bearer === #GET
+get resources by unit - /getResByUnit === needs Bearer === #GET
 
 create resource - /createRes === needs Bearer === needs body: title:str, inventoryNumber:int, worker:str, checkCode:float||int, count:int, price:float||int === #POST
 
 delete resource - /deleteRes === needs Bearer === needs body: inventoryNumber:int, count:int === #DELETE
+
+update resource - /updateRes === needs Bearer === needs body: title:str, inventoryNumber:int, dateOfRecord:str, worker:str, checkCode:float, count:int, price:float, id:int === #PUT
+
+create stock - /createStock === needs Bearer === needs body: : title:str, inventoryNumber:int, measurement:str, worker:str, kfo:int, score:str, count:float, price:float === #POST
+
+get stocks by unit - /getStocksByUnit === needs Bearer === #GET
+
+update stock - /updateStock === needs Bearer === needs body: : title:str, inventoryNumber:int, measurement:str, worker:str, kfo:int, score:str, count:float, price:float, id:int === #PUT

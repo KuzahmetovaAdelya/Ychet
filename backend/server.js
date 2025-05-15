@@ -352,7 +352,7 @@ app.delete("/deleteRes", authMiddleware, (req, res) => {
                 let newCount = resource.count - count;
                 const priceByOne = resource.price / resource.count;
                 let newPrice = newCount * priceByOne;
-                console.log(resource.count, newCount, priceByOne, newPrice)
+                console.log(resource.count, newCount, priceByOne, newPrice);
                 db.run(
                   "UPDATE resources SET count = ?, price = ? WHERE inventoryNumber = ?",
                   [newCount, newPrice, inventoryNumber],
@@ -365,18 +365,132 @@ app.delete("/deleteRes", authMiddleware, (req, res) => {
                   }
                 );
               }
-              // res.status(201).send("Created");
             }
           );
         } else {
           res.status(400).send("Not enough resources");
         }
-
-        // res.status(200).send(row);
       }
     }
   );
 });
+
+// Put method for updating resource
+// Need in body: title:str, inventoryNumber:int, dateOfRecord:str, worker:str, checkCode:float, count:int, price:float, id:int
+// Need Bearer Authorization
+app.put("/updateRes", authMiddleware, (req, res) => {
+  db.run(
+    "UPDATE resources SET title = ?, inventoryNumber = ?, dateOfRecord = ?, worker = ?, checkCode = ?, count = ?, price = ? WHERE id = ? AND unit = ?",
+    [
+      req.body.title,
+      req.body.inventoryNumber,
+      req.body.dateOfRecord,
+      req.body.worker,
+      req.body.checkCode,
+      req.body.count,
+      req.body.count * req.body.price,
+      req.body.id,
+      req.user.unit,
+    ],
+    (err, row) => {
+      if (err) {
+        res.status(500).send(err);
+        return console.log(err.message);
+      }
+      res.status(200).send("Updated");
+    }
+  );
+});
+
+// STOCKS
+
+// Post method for creating stock
+// Need in body: title:str, inventoryNumber:int, measurement:str, worker:str, kfo:int, score:str, count:float, price:float
+// Need Bearer Authorization
+app.post("/createStock", authMiddleware, (req, res) => {
+  const price = req.body.price * req.body.count;
+  db.run(
+    "INSERT INTO stocks(title, inventoryNumber, measurement, worker, kfo, score, count, price, unit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [
+      req.body.title,
+      req.body.inventoryNumber,
+      req.body.measurement,
+      req.body.worker,
+      req.body.kfo,
+      req.body.score,
+      req.body.count,
+      price,
+      req.user.unit,
+    ],
+    (err) => {
+      if (err) {
+        res.status(409).send(err);
+        return console.log(err.message);
+      }
+
+      res.status(201).send("Created");
+    }
+  );
+});
+
+// Get method for getting all stocks
+// Need Bearer Authorization
+// Works only for admin
+app.get("/getStocks", authMiddleware, (req, res) => {
+  if (req.user.role === "admin") {
+    db.all("SELECT * FROM stocks", (err, row) => {
+      if (err) {
+        res.status(500).send(err);
+        return console.log(err.message);
+      } else {
+        res.status(200).send(row);
+      }
+    });
+  } else {
+    res.status(403).send("Forbidden");
+  }
+});
+
+// Get method for getting stocks by unit
+// Needs Bearer Authorization
+app.get("/getStocksByUnit", authMiddleware, (req, res) => {
+  db.all("SELECT * FROM stocks WHERE unit=?", [req.user.unit], (err, row) => {
+    if (err) {
+      res.status(500).send(err);
+      return console.log(err.message);
+    } else {
+      res.status(200).send(row);
+    }
+  });
+});
+
+// Put method for updating stock
+// Needs in body: title:str, inventoryNumber:int, measurement:str, worker:str, kfo:int, score:str, count:float, price:float, id:int
+// Needs Bearer Authorization
+app.put('/updateStock', authMiddleware, (req, res) => {
+  db.run(
+    "UPDATE stocks SET title = ?, inventoryNumber = ?, measurement = ?, worker = ?, kfo = ?, score = ?, count = ?, price = ? WHERE id = ? AND unit = ?",
+    [
+      req.body.title,
+      req.body.inventoryNumber,
+      req.body.measurement,
+      req.body.worker,
+      req.body.kfo,
+      req.body.score,
+      req.body.count,
+      req.body.count * req.body.price,
+      req.body.id,
+      req.user.unit,
+    ],
+    (err, row) => {
+      if (err) {
+        res.status(500).send(err);
+        return console.log(err.message);
+      }
+      res.status(200).send("Updated");
+    }
+  );
+})
 
 // app.get("/test", (req, res) => {
 //   res.status(200).send(result);
