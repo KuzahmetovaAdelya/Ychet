@@ -17,10 +17,23 @@ async function encodePassword(plainTextPassword) {
   }
 }
 
-// Function to verify a password against a stored hash
+// // Function to verify a password against a stored hash
+// function verifyPassword(plainTextPassword, storedHashedPassword) {
+//   try {
+//     // Compare the provided password with the stored hash
+//     const isMatch = bcrypt.compare(plainTextPassword, storedHashedPassword);
+//     return isMatch;
+//   } catch (error) {
+//     console.error("Error verifying password:", error.message);
+//     throw error;
+//   }
+// }
+
 function verifyPassword(plainTextPassword, storedHashedPassword) {
   try {
-    // Compare the provided password with the stored hash
+    if (!plainTextPassword || !storedHashedPassword) {
+      throw new Error('Both password and hash are required');
+    }
     const isMatch = bcrypt.compare(plainTextPassword, storedHashedPassword);
     return isMatch;
   } catch (error) {

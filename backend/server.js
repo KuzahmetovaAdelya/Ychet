@@ -58,18 +58,24 @@ app.post("/createUser", authMiddleware, (req, res) => {
 // Need in body: login:str, password:str
 // Return token
 app.post("/auth", (req, res) => {
-  db.all("SELECT id FROM Users WHERE login=?", [req.body.login], (err, row) => {
-    if (err) {
-      res.status(409).send(err);
-      return console.log(err.message);
-    } else {
-      let passwordHash = row[0].password;
+  db.all(
+    "SELECT id, password FROM Users WHERE login=?",
+    [req.body.login],
+    (err, rows) => {
+      if (err) {
+        res.status(409).send(err);
+        return console.log(err.message);
+      }
+      if (!rows || rows.length === 0) {
+        return res.status(403).send("User not found");
+      }
+      let passwordHash = rows[0].password;
       let userPassword = req.body.password;
 
       const isPasswordCorrect = verifyPassword(userPassword, passwordHash);
       if (isPasswordCorrect) {
         try {
-          const id = row[0].id;
+          const id = rows[0].id;
           const token = jwt.sign(
             {
               userId: id,
@@ -86,7 +92,7 @@ app.post("/auth", (req, res) => {
         res.status(403).send("Wrong password");
       }
     }
-  });
+  );
 });
 
 // Get method for getting all users information
@@ -405,7 +411,7 @@ app.put("/updateRes", authMiddleware, (req, res) => {
 // STOCKS
 
 // Post method for creating stock
-// Need in body: title:str, inventoryNumber:int, measurement:str, worker:str, kfo:int, score:str, count:float, price:float
+// Need in body: title:str, inventoryNumber:str, measurement:str, worker:str, kfo:int, score:str, count:float, price:float
 // Need Bearer Authorization
 app.post("/createStock", authMiddleware, (req, res) => {
   const price = req.body.price * req.body.count;
@@ -465,9 +471,9 @@ app.get("/getStocksByUnit", authMiddleware, (req, res) => {
 });
 
 // Put method for updating stock
-// Needs in body: title:str, inventoryNumber:int, measurement:str, worker:str, kfo:int, score:str, count:float, price:float, id:int
+// Needs in body: title:str, inventoryNumber:str, measurement:str, worker:str, kfo:int, score:str, count:float, price:float, id:int
 // Needs Bearer Authorization
-app.put('/updateStock', authMiddleware, (req, res) => {
+app.put("/updateStock", authMiddleware, (req, res) => {
   db.run(
     "UPDATE stocks SET title = ?, inventoryNumber = ?, measurement = ?, worker = ?, kfo = ?, score = ?, count = ?, price = ? WHERE id = ? AND unit = ?",
     [
@@ -490,7 +496,80 @@ app.put('/updateStock', authMiddleware, (req, res) => {
       res.status(200).send("Updated");
     }
   );
-})
+});
+
+// Delete method for deleting stocks and create new write in write-off journal
+// Need in body: inventoryNumber:str, count:int
+// Need Bearer Authorization
+app.delete("/deleteStock", authMiddleware, (req, res) => {
+  const unit = req.user.unit;
+  const inventoryNumber = req.body.inventoryNumber;
+
+  db.all(
+    "SELECT * FROM stocks WHERE inventoryNumber=? AND unit=?",
+    [inventoryNumber, unit],
+    (err, row) => {
+      if (err) {
+        res.status(500).send(err);
+        return console.log(err.message);
+      } else {
+        const stock = row[0];
+        if (stock.count >= req.body.count) {
+          const worker = stock.worker;
+          const count = req.body.count;
+          const measurement = stock.measurement;
+          const date = GetDate();
+
+          db.run(
+            "INSERT INTO writeoffstocks(date, inventoryNumber, worker, measurement, count, unit) VALUES (?, ?, ?, ?, ?, ?)",
+            [date, inventoryNumber, worker, measurement, count, unit],
+            (err) => {
+              if (err) {
+                res.status(409).send(err);
+                return console.log(err.message);
+              }
+
+              if (stock.count === count) {
+                db.run(
+                  "DELETE FROM stocks WHERE inventoryNumber = ?",
+                  [inventoryNumber],
+                  (err, row) => {
+                    if (err) {
+                      res.status(500).send(err);
+                      return console.log(err.message);
+                    }
+                    let result = {
+                      error: "none",
+                    };
+                    res.status(200).send(result);
+                  }
+                );
+              } else {
+                let newCount = stock.count - count;
+                const priceByOne = stock.price / stock.count;
+                let newPrice = newCount * priceByOne;
+                // console.log(stock.count, newCount, priceByOne, newPrice);
+                db.run(
+                  "UPDATE stocks SET count = ?, price = ? WHERE inventoryNumber = ?",
+                  [newCount, newPrice, inventoryNumber],
+                  (err, row) => {
+                    if (err) {
+                      res.status(500).send(err);
+                      return console.log(err.message);
+                    }
+                    res.status(200).send("Updated");
+                  }
+                );
+              }
+            }
+          );
+        } else {
+          res.status(400).send("Not enough stocks");
+        }
+      }
+    }
+  );
+});
 
 // app.get("/test", (req, res) => {
 //   res.status(200).send(result);

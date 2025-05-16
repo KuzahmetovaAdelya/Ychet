@@ -39,4 +39,6 @@ create stock - /createStock === needs Bearer === needs body: : title:str, invent
 
 get stocks by unit - /getStocksByUnit === needs Bearer === #GET
 
-update stock - /updateStock === needs Bearer === needs body: : title:str, inventoryNumber:int, measurement:str, worker:str, kfo:int, score:str, count:float, price:float, id:int === #PUT
+update stock - /updateStock === needs Bearer === needs body: title:str, inventoryNumber:int, measurement:str, worker:str, kfo:int, score:str, count:float, price:float, id:int === #PUT
+
+delete stock - /deleteStock === needs Bearer === needs body: inventoryNumber:str, count:int === #DELETE
