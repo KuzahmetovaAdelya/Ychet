@@ -13,7 +13,7 @@ export default function Input({
   
 
   return (
-    <div className="flex flex-col gap-9">
+    <div className="flex flex-col gap-9 mb-56">
       <label className="text-xl font-semibold" htmlFor={inputId}>
         {labelText}
       </label>

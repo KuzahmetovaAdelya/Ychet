@@ -28,21 +28,23 @@ import { FormEvent, useState } from "react";
 export default function Home() {
   const [info, setInfo] = useState([]);
 
+  function handleSubmit(e) {
+    e.preventDefault();
+    console.log(e);
+  }
+
   return (
     <div className="font-roboto relative">
-
-      <div className="login-container flex flex-col items-center justify-center h-screen font-arial">
-        <TextB text="Вход в систему" />
-        <br></br>
+      <form className="login-container flex flex-col items-center justify-center h-screen font-arial">
+        <h1 className="text-black font-roboto text-button text-b mb-48">Вход в систему</h1>
         <Input inputId="name" inputName="name" labelText="Логин" />
-        <br></br>
+        {/* <br></br> */}
         <Input inputId="password" inputName="password" labelText="Пароль" />
-        <br></br>
-        <br></br>
+        {/* <br></br> */}
+        {/* <br></br> */}
         <Button text="Войти" link="/" />
-      </div>
+      </form>
       <img src="/spk.png" alt="" className="z-10 absolute top-50 left-50" />
-
     </div>
   );
 }
