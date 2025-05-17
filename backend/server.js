@@ -224,6 +224,20 @@ app.post("/createCabinet", authMiddleware, (req, res) => {
   );
 });
 
+app.delete('/deleteCabinet', authMiddleware, (req, res) => {
+  const unit = req.user.unit;
+  db.run("DELETE FROM cabinets WHERE unit = ? AND cabinet = ?", [unit, req.body.cabinet], (err, row) => {
+    if (err) {
+      res.status(500).send(err);
+      return console.log(err.message);
+    }
+    let result = {
+      error: "none",
+    };
+    res.status(200).send(result);
+  });
+})
+
 // Get method for getting all cabinets
 // Need Bearer Authorization
 // Work only for admin
